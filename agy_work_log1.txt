@@ -1,0 +1,145 @@
+Act as an expert ESPHome core developer and Home Assistant integrations engineer. I need you to diagnose and solve a critical communication crash between my custom ESPHome node and Home Assistant.
+
+### THE CURRENT SITUATION:
+- Hardware: ESP32-S3 custom voice satellite with an 8-bit serial microphone input running at 250,000 baud, scaled to 16-bit PCM in C++, and an I2S speaker loop.
+- Core Functionality: The custom C++ component is working perfectly. The internal loops are running, and telemetry logs show that `window_bytes_received` is counting up and min/max values are responding dynamically to live sound.
+- The Problem: When the node connects to Home Assistant, the microphone and wake-word entities are greyed out with red exclamation marks.
+
+### THE ERROR LOG IN HOME ASSISTANT:
+When initializing or reloading the node, Home Assistant throws the following fatal exception:
+"2026-08-25 14:59:00.102 ERROR (MainThread) [homeassistant.config_entries] Error unloading entry pi-top PULSE Voice Node for assist_satellite
+Traceback (most recent call last):
+  File "/usr/src/homeassistant/homeassistant/config_entries.py", line 1036, in async_unload
+    result = await component.async_unload_entry(hass, self)
+  File "/usr/src/homeassistant/homeassistant/components/assist_satellite/__init__.py", line 202, in async_unload_entry
+    return await hass.data[DATA_COMPONENT].async_unload_entry(entry)
+  File "/usr/src/homeassistant/homeassistant/helpers/entity_component.py", line 201, in async_unload_entry
+    raise ValueError("Config entry was never loaded!")
+ValueError: Config entry was never loaded!"
+
+### CURRENT SOURCE CODE FILES:
+
+File 1: esp_pi-top.yaml (Microphone & Voice sections only)
+```yaml
+microphone:
+  - platform: serial_voice_mic
+    id: pitop_mic
+
+voice_assistant:
+  id: va_satellite
+  microphone: pitop_mic
+  speaker: pitop_speaker
+  use_wake_word: true
+  noise_suppression_level: 0
+  auto_gain: 0dBFS
+  conversation_timeout: 300s
+  volume_multiplier: 1.0
+```
+
+File 2: serial_voice_mic.h (Class Declaration only)
+```cpp
+class SerialVoiceMic : public esphome::Component, public esphome::microphone::Microphone {
+  // Implements setup(), loop(), start(), stop(), and a FreeRTOS background sampling task.
+  // Pushes raw audio data blocks into the native pipeline using data_callbacks_.call().
+};
+```
+
+### YOUR TASK:
+Analyze this failure behavior. Determine why Home Assistant's `assist_satellite` component fails to load this specific configuration tree, causing it to throw a `ValueError` on unload and lock out the voice entities.
+
+Provide your reasoning for the failure, followed by the complete, fully updated code for `esp_pi-top.yaml` and `serial_voice_mic.h` that resolves this handshake conflict cleanly. Do not truncate the files or use placeholders.
+
+
+
+
+
+
+
+
+
+Act as an expert ESPHome core framework developer and Home Assistant architecture engineer.
+
+### CURRENT SITUATION & BREAKTHROUGH:
+- The custom C++ loop logic is working perfectly. `Serial2` reads at 250,000 baud, and the 2-second diagnostic telemetry logs show `serial_mic_track2` counting up and responding live to voice input.
+- Home Assistant successfully establishes a native handshake with the device as an official `assist_satellite` component. No errors appear in the logs.
+
+### THE REMAINING BUG:
+In the Home Assistant UI Device Card, both the "Microphone" and "Wake word" configuration dropdown selectors remain greyed out and marked as "unavailable".
+
+### YOUR TASK:
+Analyze the active configuration files below. Determine how to cleanly satisfy Home Assistant's strict API validation requirements so the dropdown menus unlock and turn active, while ensuring our working C++ loop continues to pipe raw serial audio data into the native voice assistant pipeline.
+
+Provide the fully updated, complete code text for `esp_pi-top.yaml` and `serial_voice_mic.h`. Do not use placeholders or truncate the code blocks.
+
+
+
+
+###In the updated script following are working
+
+1.when start conversation press HA able to receive and reply properly example: what time is it?
+2.when switch on wake word it is not detecting wake word
+3.HA UI's native mic and wake word are still disabled.
+
+###Your Task
+1. Make the wake word working
+2. Enable the HA native mic and wake word to be un greyed out.
+
+Speaker, Serial raw data capturing and all other parameters are working fine so keep that all in intact.
+
+Provide the fully updated, complete code text for `esp_pi-top.yaml` and `serial_voice_mic.h`.
+
+
+
+
+
+###In the updated script following are working
+
+1.on boot the device state is running and able to get the speech. on wake word it goes to stop mode and remains in the same state. it is not again triggered by wake word.
+2.on pressing start conversation button it works fine chaning from stopped to started and on completion it goes to stop.
+3.HA native UI mic and wake word detection drop downs are still greyed out. Give more priority to this.
+
+Speaker, Serial raw data capturing and all other parameters are working fine so keep that all in intact.
+Provide the fully updated, complete code text for `esp_pi-top.yaml` and `serial_voice_mic.h`. or any other relavent files
+
+
+On Boot after detecting wake word this is the result. Fix it and update the files
+[21:31:31.420][D][micro_wake_word:334]: Detected 'Okay Nabu' with sliding average probability is 0.99 and max probability is 1.00
+[21:31:31.421][D][voice_assistant:607]: State changed from IDLE to START_MICROPHONE
+[21:31:31.422][D][voice_assistant:614]: Desired state set to START_PIPELINE
+[21:31:31.423][D][micro_wake_word:379]: Stopping wake word detection
+[21:31:31.441][D][voice_assistant:310]: Starting Microphone
+[21:31:31.444][D][ring_buffer:035]: Created ring buffer with size 16384
+[21:31:31.452][I][serial_voice_mic:068]: Starting SerialVoiceMic audio streaming
+[21:31:31.453][D][voice_assistant:607]: State changed from START_MICROPHONE to STARTING_MICROPHONE
+[21:31:31.455][D][micro_wake_word:387]: State changed from DETECTING_WAKE_WORD to STOPPING
+[21:31:31.462][D][micro_wake_word:286]: Inference task is stopping, deallocating buffers
+[21:31:31.463][D][micro_wake_word:291]: Inference task is finished, freeing task resources
+[21:31:31.464][D][micro_wake_word:387]: State changed from STOPPING to STOPPED
+[21:31:31.468][I][serial_voice_mic:074][mww]: Stopping SerialVoiceMic audio streaming
+[21:31:31.714][D][serial_voice_mic:111][serial_mic_task]: [2s Telemetry] State: STOPPED |
+Speaker, Serial raw data capturing and all other parameters are working fine so keep that all in intact.
+Provide the fully updated, complete code text for `esp_pi-top.yaml` and `serial_voice_mic.h`. or any other relavent files
+
+
+
+https://github.com/pi-top/pi-topPULSE
+
+### Adding RGB LED matrix displar for the pi-top project
+
+Now that the pi-top voice assistant is working we keep the code intact and need to add the support for the built-in 7x7 RGB LED matrix
+
+The hardware uses the same serial2 Tx pin alone to send commands to the controller in a specific format as shown in the file https://github.com/pi-top/pi-topPULSE/blob/master/library/ptpulse/ledmatrix.py
+The Digits count display demo is there in the file https://github.com/pi-top/pi-topPULSE/blob/master/examples/showdigits.py
+
+### TASK
+
+1.Need to incorporate the LED matrix controller Functionality as shown in the above files
+2.Need a LED ring animation when connected or wake word detected
+3.Need custome buttons in the HA to switch on / change color / Change brightness of the LED matrix
+4.Add some cool LED effects which can be controlled via VA
+Keep all the current parameter in yaml intact
+Provide the fully updated, complete code along with `esp_pi-top.yaml` and `serial_voice_mic.h`. or any other relavent files
+
+
+
+

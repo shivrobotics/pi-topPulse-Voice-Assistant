@@ -1,0 +1,324 @@
+substitutions:
+  name: "pi-top-voice-mic"
+  friendly_name: "pi-top PULSE Voice Node"
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  includes:
+    - configure.h
+    - serial_voice_mic.h
+    - pitop_matrix.h
+  libraries:
+    - Wire
+  on_boot:
+    priority: -100
+    then:
+      - lambda: |-
+          id(pitop_speaker).set_volume(id(voice_volume).state / 100.0f);
+      - delay: 1s
+      - micro_wake_word.start:
+
+esp32:
+  board: esp32-s3-devkitc-1
+  flash_size: 16MB
+  framework:
+    type: arduino
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+logger:
+  level: DEBUG
+  hardware_uart: USB_SERIAL_JTAG
+
+api:
+  reboot_timeout: 0s
+  services:
+    - service: set_matrix_effect
+      variables:
+        effect: string
+      then:
+        - lambda: |-
+            id(pulse_matrix).set_effect_by_name(effect);
+            id(matrix_effect_select).publish_state(id(pulse_matrix).get_canonical_effect_name());
+    - service: set_matrix_color
+      variables:
+        color: string
+      then:
+        - lambda: |-
+            id(pulse_matrix).set_color_by_name(color);
+            id(matrix_effect_select).publish_state("Solid Color");
+  on_client_connected:
+    - rtttl.play: "connected:d=16,o=5,b=160:c,e,g"
+    - lambda: |-
+        id(pulse_matrix).trigger_connected_animation();
+
+ota:
+  - platform: esphome
+
+wifi:
+  ssid: "Jio5G"
+  password: "eeelllaaa"
+  ap:
+    ssid: "Pi-Top-Mic-Fallback"
+    password: "12345678"
+
+captive_portal:
+
+external_components:
+  - source: components
+
+pitop_matrix:
+  id: pulse_matrix
+
+i2s_audio:
+  - id: i2s_audio_bus
+    i2s_lrclk_pin: 17
+    i2s_bclk_pin: 15
+
+speaker:
+  - platform: i2s_audio
+    id: pitop_speaker
+    i2s_audio_id: i2s_audio_bus
+    i2s_dout_pin: 16
+    dac_type: external
+    channel: mono
+    sample_rate: 16000
+
+rtttl:
+  id: pitop_buzzer
+  speaker: pitop_speaker
+  gain: 35%
+  on_finished_playback:
+    - lambda: |-
+        id(pitop_speaker).set_volume(id(voice_volume).state / 100.0f);
+
+media_player:
+  - platform: speaker
+    name: "pi-top PULSE Speaker"
+    announcement_pipeline:
+      speaker: pitop_speaker
+
+microphone:
+  - platform: serial_voice_mic
+    id: pitop_mic
+
+micro_wake_word:
+  id: mww
+  microphone: pitop_mic
+  models:
+    - model: okay_nabu
+      id: okay_nabu
+    - model: hey_jarvis
+      id: hey_jarvis
+    - model: alexa
+      id: alexa
+  on_wake_word_detected:
+    - rtttl.play: "ding:d=32,o=6,b=180:c,g"
+    - lambda: |-
+        id(pulse_matrix).start_listening_animation();
+    - voice_assistant.start:
+        wake_word: !lambda return wake_word;
+
+voice_assistant:
+  id: va_satellite
+  microphone: pitop_mic
+  speaker: pitop_speaker
+  micro_wake_word: mww
+  noise_suppression_level: 0
+  auto_gain: 0dBFS
+  conversation_timeout: 300s
+  volume_multiplier: 1.0
+  on_listening:
+    - lambda: |-
+        id(pulse_matrix).start_listening_animation();
+  on_stt_end:
+    - lambda: |-
+        std::string text = x;
+        std::transform(text.begin(), text.end(), text.begin(), ::tolower);
+        ESP_LOGI("voice_stt", "Voice recognition received: '%s'", text.c_str());
+        if (text.find("matrix") != std::string::npos || text.find("effect") != std::string::npos || text.find("led") != std::string::npos) {
+          id(pulse_matrix).set_effect_by_name(text);
+          id(matrix_effect_select).publish_state(id(pulse_matrix).get_canonical_effect_name());
+        }
+  on_tts_start:
+    - lambda: |-
+        id(pulse_matrix).start_speaking_animation();
+  on_tts_stream_end:
+    - delay: 3s
+    - lambda: |-
+        id(pulse_matrix).stop_speaking_animation();
+    - delay: 200ms
+    - micro_wake_word.start:
+  on_end:
+    - lambda: |-
+        if (id(pulse_matrix).get_va_state() != VA_ANIM_SPEAKING) {
+          id(pulse_matrix).stop_va_animation();
+        }
+    - delay: 200ms
+    - micro_wake_word.start:
+  on_error:
+    - lambda: |-
+        id(pulse_matrix).stop_va_animation();
+    - delay: 200ms
+    - micro_wake_word.start:
+  on_client_connected:
+    - delay: 200ms
+    - micro_wake_word.start:
+
+number:
+  - platform: template
+    name: "Voice Response Volume"
+    id: voice_volume
+    icon: "mdi:volume-high"
+    min_value: 10
+    max_value: 100
+    step: 5
+    initial_value: 100
+    unit_of_measurement: "%"
+    optimistic: true
+    restore_value: true
+    set_action:
+      - lambda: |-
+          id(pitop_speaker).set_volume(x / 100.0f);
+
+  - platform: template
+    name: "LED Matrix Brightness"
+    id: matrix_brightness
+    icon: "mdi:brightness-6"
+    min_value: 5
+    max_value: 100
+    step: 5
+    initial_value: 60
+    unit_of_measurement: "%"
+    optimistic: true
+    set_action:
+      - lambda: |-
+          id(pulse_matrix).set_brightness(x / 100.0f);
+
+switch:
+  - platform: template
+    name: "Microphone Mute"
+    id: mic_mute
+    icon: "mdi:microphone-off"
+    entity_category: config
+    optimistic: true
+    turn_on_action:
+      - lambda: |-
+          id(pitop_mic).stop();
+          id(mww).stop();
+    turn_off_action:
+      - lambda: |-
+          id(pitop_mic).start();
+          id(mww).start();
+
+  - platform: template
+    name: "Wake Word Detection"
+    id: wake_word_toggle
+    icon: "mdi:waveform"
+    entity_category: config
+    optimistic: true
+    turn_on_action:
+      - micro_wake_word.start:
+    turn_off_action:
+      - micro_wake_word.stop:
+
+  - platform: template
+    name: "LED Matrix Power"
+    id: matrix_power
+    icon: "mdi:led-strip-variant"
+    optimistic: true
+    restore_mode: ALWAYS_ON
+    turn_on_action:
+      - lambda: |-
+          id(pulse_matrix).set_power(true);
+    turn_off_action:
+      - lambda: |-
+          id(pulse_matrix).set_power(false);
+
+select:
+  - platform: template
+    name: "LED Matrix Effect"
+    id: matrix_effect_select
+    icon: "mdi:creation"
+    optimistic: true
+    options:
+      - "Off"
+      - "Solid Color"
+      - "Rainbow Wave"
+      - "Ring Pulse"
+      - "Matrix Rain"
+      - "Flickering Fire"
+      - "Radar Sweep"
+      - "Digit Counter"
+      - "Audio Equalizer"
+      - "Twinkling Stars"
+    initial_option: "Off"
+    set_action:
+      - lambda: |-
+          id(pulse_matrix).set_effect_by_name(x);
+          id(matrix_effect_select).publish_state(id(pulse_matrix).get_canonical_effect_name());
+
+button:
+  - platform: template
+    name: "Start Conversation"
+    icon: "mdi:microphone"
+    entity_category: diagnostic
+    on_press:
+      - voice_assistant.start:
+
+  - platform: template
+    name: "Color: Cyan"
+    icon: "mdi:palette"
+    on_press:
+      - lambda: |-
+          id(pulse_matrix).set_solid_color(0, 200, 255);
+          id(matrix_effect_select).publish_state("Solid Color");
+
+  - platform: template
+    name: "Color: Purple"
+    icon: "mdi:palette"
+    on_press:
+      - lambda: |-
+          id(pulse_matrix).set_solid_color(180, 0, 255);
+          id(matrix_effect_select).publish_state("Solid Color");
+
+  - platform: template
+    name: "Color: Emerald Green"
+    icon: "mdi:palette"
+    on_press:
+      - lambda: |-
+          id(pulse_matrix).set_solid_color(0, 255, 60);
+          id(matrix_effect_select).publish_state("Solid Color");
+
+  - platform: template
+    name: "Color: Amber Gold"
+    icon: "mdi:palette"
+    on_press:
+      - lambda: |-
+          id(pulse_matrix).set_solid_color(255, 140, 0);
+          id(matrix_effect_select).publish_state("Solid Color");
+
+  - platform: template
+    name: "Color: Coral Red"
+    icon: "mdi:palette"
+    on_press:
+      - lambda: |-
+          id(pulse_matrix).set_solid_color(255, 30, 30);
+          id(matrix_effect_select).publish_state("Solid Color");
+
+  - platform: template
+    name: "Trigger Connected Animation"
+    icon: "mdi:waveform"
+    on_press:
+      - lambda: |-
+          id(pulse_matrix).trigger_connected_animation();
+
+  - platform: template
+    name: "Trigger Wake Word Ring"
+    icon: "mdi:record-circle-outline"
+    on_press:
+      - lambda: |-
+          id(pulse_matrix).start_listening_animation();

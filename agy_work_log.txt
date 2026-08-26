@@ -1,0 +1,192 @@
+alias: "Assist: LED Matrix Effect Control"
+description: "Voice control for pi-top PULSE LED Matrix effects"
+trigger:
+  - platform: conversation
+    command:
+      - "Set [the] LED matrix [effect] to {effect}"
+      - "Change [the] LED matrix [effect] to {effect}"
+      - "Set [the] matrix effect to {effect}"
+      - "Switch [the] LED matrix to {effect}"
+      - "Set [the] LED effect to {effect}"
+action:
+  - action: select.select_option
+    target:
+      entity_id: select.pi_top_pulse_voice_node_led_matrix_effect
+    data:
+      option: "{{ trigger.slots.effect | title }}"
+  - set_conversation_response: "Set LED matrix effect to {{ trigger.slots.effect | title }}"
+
+
+
+###The below are not working and need to fix it
+Settings > Automations & Scenes > Create Automation trigger working smoothly. But no animation display
+### Need fix for the below
+1.Voice Assistant Speaking LED equalizer animation - no display animation
+2.Response: "Set LED matrix effect to Matrixrain" but no display animation
+
+###The debug message for the actions below
+[D][micro_wake_word:334]: Detected 'Okay Nabu' with sliding average probability is 0.98 and max probability is 1.00
+[03:51:17.406][D][rtttl:295]: Playing song ding
+[03:51:17.407][D][pitop_matrix:197]: Started Voice Assistant Listening LED halo animation
+[03:51:17.409][D][voice_assistant:607]: State changed from IDLE to START_MICROPHONE
+[03:51:17.411][D][voice_assistant:614]: Desired state set to START_PIPELINE
+[03:51:17.411][D][micro_wake_word:379]: Stopping wake word detection
+[03:51:17.437][D][voice_assistant:310]: Starting Microphone
+[03:51:17.438][D][ring_buffer:035]: Created ring buffer with size 16384
+[03:51:17.439][I][serial_voice_mic:108]: SerialVoiceMic start requested (active references: 3)
+[03:51:17.442][D][voice_assistant:607]: State changed from START_MICROPHONE to STARTING_MICROPHONE
+[03:51:17.444][D][micro_wake_word:387]: State changed from DETECTING_WAKE_WORD to STOPPING
+[03:51:17.472][D][voice_assistant:607]: State changed from STARTING_MICROPHONE to START_PIPELINE
+[03:51:17.473][D][micro_wake_word:286]: Inference task is stopping, deallocating buffers
+[03:51:17.474][D][micro_wake_word:291]: Inference task is finished, freeing task resources
+[03:51:17.476][D][micro_wake_word:387]: State changed from STOPPING to STOPPED
+[03:51:17.478][D][i2s_audio.speaker:063]: Starting
+[03:51:17.481][I][serial_voice_mic:116][mww]: SerialVoiceMic stop requested (active references: 2)
+[03:51:17.486][D][ring_buffer:035][speaker_task]: Created ring buffer with size 16000
+[03:51:17.499][D][voice_assistant:334]: Requesting start
+[03:51:17.506][D][voice_assistant:607]: State changed from START_PIPELINE to STARTING_PIPELINE
+[03:51:17.511][D][voice_assistant:629]: Client started, streaming microphone
+[03:51:17.513][D][voice_assistant:607]: State changed from STARTING_PIPELINE to STREAMING_MICROPHONE
+[03:51:17.515][D][voice_assistant:614]: Desired state set to STREAMING_MICROPHONE
+[03:51:17.519][D][voice_assistant:761]: Event Type: 1
+[03:51:17.519][D][voice_assistant:764]: Assist Pipeline running
+[03:51:17.522][D][voice_assistant:761]: Event Type: 3
+[03:51:17.523][D][voice_assistant:783]: STT started
+[03:51:17.562][D][pitop_matrix:197]: Started Voice Assistant Listening LED halo animation
+[03:51:17.742][D][i2s_audio.speaker:088]: Stopped
+[03:51:17.744][D][rtttl:430]: Playback finished
+[03:51:18.422][D][serial_voice_mic:156][serial_mic_task]: [2s Telemetry] State: RUNNING (refs: 2) | Total Rx: 24786725 B | Window Rx: 31920 B | Raw [Min: 12, Max: 201] | PCM [Min: -29696, Max: 18688]
+[03:51:18.816][D][voice_assistant:761]: Event Type: 11
+[03:51:18.816][D][voice_assistant:964]: Starting STT by VAD
+[03:51:20.415][D][serial_voice_mic:156][serial_mic_task]: [2s Telemetry] State: RUNNING (refs: 2) | Total Rx: 24818765 B | Window Rx: 32040 B | Raw [Min: 68, Max: 159] | PCM [Min: -15360, Max: 7936]
+[03:51:22.424][D][serial_voice_mic:156][serial_mic_task]: [2s Telemetry] State: RUNNING (refs: 2) | Total Rx: 24850686 B | Window Rx: 31921 B | Raw [Min: 74, Max: 172] | PCM [Min: -13824, Max: 11264]
+[03:51:24.104][D][voice_assistant:761]: Event Type: 12
+[03:51:24.104][D][voice_assistant:968]: STT by VAD end
+[03:51:24.107][D][voice_assistant:607]: State changed from STREAMING_MICROPHONE to STOP_MICROPHONE
+[03:51:24.108][D][voice_assistant:614]: Desired state set to AWAITING_RESPONSE
+[03:51:24.151][I][serial_voice_mic:116]: SerialVoiceMic stop requested (active references: 1)
+[03:51:24.155][D][voice_assistant:607]: State changed from STOP_MICROPHONE to STOPPING_MICROPHONE
+[03:51:24.192][D][voice_assistant:607]: State changed from STOPPING_MICROPHONE to AWAITING_RESPONSE
+[03:51:24.420][D][serial_voice_mic:156][serial_mic_task]: [2s Telemetry] State: RUNNING (refs: 1) | Total Rx: 24882606 B | Window Rx: 31920 B | Raw [Min: 96, Max: 113] | PCM [Min: -8192, Max: -3840]
+[03:51:26.424][D][serial_voice_mic:156][serial_mic_task]: [2s Telemetry] State: RUNNING (refs: 1) | Total Rx: 24914646 B | Window Rx: 32040 B | Raw [Min: 95, Max: 115] | PCM [Min: -8448, Max: -3328]
+[03:51:28.317][D][voice_assistant:761]: Event Type: 4
+[03:51:28.318][D][voice_assistant:800]: Speech recognised as: " Set the LED matrix effect to MatrixRain."
+[03:51:28.320][D][voice_assistant:761]: Event Type: 5
+[03:51:28.322][D][voice_assistant:805]: Intent started
+[03:51:28.350][D][voice_assistant:761]: Event Type: 6
+[03:51:28.351][D][voice_assistant:761]: Event Type: 7
+[03:51:28.353][D][voice_assistant:858]: Response: "Set LED matrix effect to Matrixrain"
+[03:51:28.355][D][voice_assistant:761]: Event Type: 98
+[03:51:28.357][D][voice_assistant:948]: TTS stream start
+[03:51:28.358][D][voice_assistant:761]: Event Type: 8
+[03:51:28.360][D][voice_assistant:880]: Response URL: "http://192.168.29.77:8123/api/tts_proxy/3FBd37KfFAKNG6rjjBoD7Q.wav"
+[03:51:28.362][D][voice_assistant:607]: State changed from AWAITING_RESPONSE to STREAMING_RESPONSE
+[03:51:28.363][D][voice_assistant:614]: Desired state set to STREAMING_RESPONSE
+[03:51:28.366][D][voice_assistant:761]: Event Type: 2
+[03:51:28.368][D][voice_assistant:903]: Assist Pipeline ended
+[03:51:28.392][D][pitop_matrix:204]: Started Voice Assistant Speaking LED equalizer animation
+[03:51:28.412][D][pitop_matrix:213]: Stopped Voice Assistant LED animation
+[03:51:28.419][D][serial_voice_mic:156]: [2s Telemetry] State: RUNNING (refs: 1) | Total Rx: 24946566 B | Window Rx: 31920 B | Raw [Min: 97, Max: 112] | PCM [Min: -7936, Max: -4096]
+[03:51:28.422][D][i2s_audio.speaker:063]: Starting
+[03:51:28.423][D][ring_buffer:035][speaker_task]: Created ring buffer with size 16000
+[03:51:28.614][D][micro_wake_word:369]: Starting wake word detection
+[03:51:28.625][D][micro_wake_word:387]: State changed from STOPPED to STARTING
+[03:51:28.648][D][micro_wake_word:274]: Inference task has started, attempting to allocate memory for buffers
+[03:51:28.649][D][micro_wake_word:279]: Inference task is running
+[03:51:28.650][D][micro_wake_word:387]: State changed from STARTING to DETECTING_WAKE_WORD
+[03:51:28.654][D][ring_buffer:035][mww]: Created ring buffer with size 3840
+[03:51:28.655][I][serial_voice_mic:108][mww]: SerialVoiceMic start requested (active references: 2)
+[03:51:28.934][D][i2s_audio.speaker:088]: Stopped
+[03:51:28.953][D][i2s_audio.speaker:063]: Starting
+[03:51:28.953][D][ring_buffer:035][speaker_task]: Created ring buffer with size 16000
+[03:51:30.425][D][serial_voice_mic:156][serial_mic_task]: [2s Telemetry] State: RUNNING (refs: 2) | Total Rx: 24978486 B | Window Rx: 31920 B | Raw [Min: 12, Max: 199] | PCM [Min: -29696, Max: 18176]
+[03:51:31.421][D][voice_assistant:761]: Event Type: 99
+[03:51:31.423][D][voice_assistant:958]: TTS stream end
+[03:51:31.442][D][voice_assistant:459]: End of audio stream received
+[03:51:31.444][D][voice_assistant:607]: State changed from STREAMING_RESPONSE to RESPONSE_FINISHED
+[03:51:31.447][D][voice_assistant:614]: Desired state set to RESPONSE_FINISHED
+[03:51:32.403][D][i2s_audio.speaker:088]: Stopped
+[03:51:32.421][D][voice_assistant:500]: Speaker has finished outputting all audio
+[03:51:32.459][D][pitop_matrix:213]: Stopped Voice Assistant LED animation
+[03:51:32.462][D][voice_assistant:607]: State changed from RESPONSE_FINISHED to IDLE
+[03:51:32.463][D][voice_assistant:614]: Desired state set to IDLE
+
+
+
+###The below are working
+1.Connected , wake word and speaking animations are working
+2.LED matrix effect still not changing and the control UI drop down menu was in always rainbow wave
+
+### Need fix for the below
+1.Connected animation need to be off after 2 seconds
+2.LED matrix effect chnage should work and the HA control UI drop down to be updated.
+3.Need a volume change option for the response speaking and the chime notification sound
+4.change default LED matrix effect to off
+
+
+### Need fix for the below
+1.LED matrix effect default set to off so LED Matrix Power is also off. because of that no anymation played for any events.LED Matrix Power should be global matrix on/off and the matrix effect should be independent
+2.chime volume change is having any effect and rtttl is playing 100% volume
+3.change default LED matrix effect to off
+voice response volume works fine and changing perfectly so keep it in tact
+
+
+## Need fix for the below
+1.Now no notification chime on connect and wakeword. Animations working fine.
+2.LED matix effect change via voice still not working. but changing from UI is fine as earlier
+3.In th effects Rinbow wave play same as matrix rain and the Flickering fire plays same as ring pulse when changing via UI.
+Pls keep rest functions intact and fix only the above. post clear reason why matrix effect works via UI but not via voice
+
+
+Voice Response Volume is very low and UI control is not working.
+Now the boot time to connect is more than 20 seconds which was only 10 Secs ealier.
+check if the STT local parsing causes the delay.
+
+
+###All the matrix effects are working via UI.
+
+###The below are working via voice
+Speech recognised as: " Set LED Matrix Effect to Matrix Rain."
+Speech recognised as: " set LED matrix effect to OFF"
+Speech recognised as: " Set the LED matrix effect to rainbow wave."
+
+###The below are always going to matrix rain via voice
+Speech recognised as: " set LED matrix effect to ring pulse" matrix rain
+Speech recognised as: " set LED matrix effect to solid color."
+Speech recognised as: " set LED matrix effect to flickering fire"
+Speech recognised as: " Set LED matrix effect to Radar Sweep"
+Speech recognised as: " Set LED matrix effect to digit count."
+Speech recognised as: " set LED matrix effect to audio equalizer"
+Speech recognised as: " set LED matrix effect to twinkling stars."
+
+Rest all functions working ok except sometime missing phrases. Fix it the bugs
+
+
+###Most functions working. some minor issues command not recognised by HA but got executed localy by voice_stt. But the prompt response is misleading
+[06:41:05.947][D][voice_assistant:800]: Speech recognised as: " Set the LED matrix off."
+[06:41:05.953][D][voice_assistant:858]: Response: "Sorry, I am not aware of any area called Set"
+[06:41:05.962][D][voice_assistant:903]: Assist Pipeline ended
+[06:41:05.986][I][voice_stt:141]: Voice recognition received: ' set the led matrix off.'
+[06:41:05.987][I][pitop_matrix:200]: Processing set_effect_by_name: ' set the led matrix off.' (normalized: 'settheledmatrixoff')
+[06:41:05.988][I][pitop_matrix:195]: LED Matrix effect set to: Off (enum 0)
+
+
+alias: "Assist: LED Matrix Effect Control"
+trigger:
+description: "Voice control for pi-top PULSE LED Matrix effects"
+  - platform: conversation
+    command:
+      - "[Set|Change|Switch|Turn] [the] LED matrix [effect] [to] {effect}"
+      - "[Set|Change|Switch|Turn] [the] LED matrix {effect}"
+      - "[Set|Change|Switch|Turn] [the] matrix [effect] [to] {effect}"
+      - "[Set|Change|Switch|Turn] [the] matrix {effect}"
+      - "[Set|Change|Switch|Turn] off [the] [LED] matrix"
+      - "[Set|Change|Switch|Turn] on [the] [LED] matrix"
+      - "[LED] matrix [effect] [to] {effect}"
+      - "Matrix [effect] [to] {effect}"
+action:
+  - action: esphome.pi_top_voice_mic_set_matrix_effect
+    data:
+      effect: "{{ trigger.slots.effect | default('off') }}"
+  - set_conversation_response: "Set LED matrix to {{ trigger.slots.effect | default('off') }}"
+
