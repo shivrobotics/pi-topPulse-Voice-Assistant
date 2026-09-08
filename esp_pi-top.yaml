@@ -109,11 +109,14 @@ micro_wake_word:
   id: mww
   microphone: pitop_mic
   models:
-    - model: okay_nabu
+    #- model: https://microwakeword.com/api/models/2738/manifest.json # Index 0 (Default)
+    - model: veronica.json
+      id: veronica
+    - model: okay_nabu                      # Index 1
       id: okay_nabu
-    - model: hey_jarvis
+    - model: hey_jarvis                     # Index 2
       id: hey_jarvis
-    - model: alexa
+    - model: alexa                          # Index 3
       id: alexa
   on_wake_word_detected:
     - rtttl.play: "ding:d=32,o=6,b=180:c,g"
@@ -139,10 +142,27 @@ voice_assistant:
         std::string text = x;
         std::transform(text.begin(), text.end(), text.begin(), ::tolower);
         ESP_LOGI("voice_stt", "Voice recognition received: '%s'", text.c_str());
+
+        // ⬇️ New Local Voice-Volume Interceptor
+        if (text.find("volume") != std::string::npos) {
+          for (size_t i = 0; i < text.length(); ++i) {
+            if (isdigit(text[i])) {
+              int parsed_volume = atoi(&text[i]);
+              if (parsed_volume >= 10 && parsed_volume <= 100) {
+                // Instantly syncs your template UI slider state to match your spoken numbers
+                id(voice_volume).publish_state(parsed_volume);
+                ESP_LOGI("volume_sync", "Local UI component synchronized to: %d%%", parsed_volume);
+                break;
+              }
+            }
+          }
+        }
+
         if (text.find("matrix") != std::string::npos || text.find("effect") != std::string::npos || text.find("led") != std::string::npos) {
           id(pulse_matrix).set_effect_by_name(text);
           id(matrix_effect_select).publish_state(id(pulse_matrix).get_canonical_effect_name());
         }
+
   on_tts_start:
     - lambda: |-
         id(pulse_matrix).start_speaking_animation();
@@ -260,6 +280,52 @@ select:
       - lambda: |-
           id(pulse_matrix).set_effect_by_name(x);
           id(matrix_effect_select).publish_state(id(pulse_matrix).get_canonical_effect_name());
+
+  - platform: template
+    name: "Active Wake Word"
+    id: active_wake_word_select
+    icon: "mdi:microphone-message"
+    optimistic: true
+    options:
+      - "Veronica"
+      - "Ok Nabu"
+      - "Hey Jarvis"
+      - "Alexa"
+    initial_option: "Veronica"
+    set_action:
+      - then:
+          - if:
+              condition:
+                lambda: 'return x == "Veronica";'
+              then:
+                - micro_wake_word.enable_model: veronica
+                - micro_wake_word.disable_model: okay_nabu
+                - micro_wake_word.disable_model: hey_jarvis
+                - micro_wake_word.disable_model: alexa
+          - if:
+              condition:
+                lambda: 'return x == "Ok Nabu";'
+              then:
+                - micro_wake_word.disable_model: veronica
+                - micro_wake_word.enable_model: okay_nabu
+                - micro_wake_word.disable_model: hey_jarvis
+                - micro_wake_word.disable_model: alexa
+          - if:
+              condition:
+                lambda: 'return x == "Hey Jarvis";'
+              then:
+                - micro_wake_word.disable_model: veronica
+                - micro_wake_word.disable_model: okay_nabu
+                - micro_wake_word.enable_model: hey_jarvis
+                - micro_wake_word.disable_model: alexa
+          - if:
+              condition:
+                lambda: 'return x == "Alexa";'
+              then:
+                - micro_wake_word.disable_model: veronica
+                - micro_wake_word.disable_model: okay_nabu
+                - micro_wake_word.disable_model: hey_jarvis
+                - micro_wake_word.enable_model: alexa
 
 button:
   - platform: template
