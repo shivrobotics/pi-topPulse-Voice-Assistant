@@ -59,8 +59,8 @@ ota:
   - platform: esphome
 
 wifi:
-  ssid: "Jio5G"
-  password: "eeelllaaa"
+  ssid: "xxxxxx"
+  password: "xxxxxx"
   ap:
     ssid: "Pi-Top-Mic-Fallback"
     password: "12345678"
