@@ -28,7 +28,7 @@ The goal of this project is to implement a **native, two-way Voice Assistant sat
 
 | Subsystem | Parameter / Pin | Specification |
 | :--- | :--- | :--- |
-| **pi-top PULSE** | Model | Use bottom side 40pin expansion port |
+| **pi-top PULSE** | Model | Use bottom side 40pin expansion port https://pinout.xyz/pinout/pi_toppulse|
 | **Microcontroller** | Model | ESP32-S3 (Board: `esp32-s3-devkitc-1`) |
 | **Flash & Memory** | Flash / PSRAM | 16MB Flash, 80MHz Octal PSRAM |
 | **Microphone Source** | UART RX | GPIO 7 (RX) @ **250,000 baud 8N1** (4096-byte buffer) |
